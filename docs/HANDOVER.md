@@ -25,7 +25,7 @@ Go to **nippers.org.uk/login** and use the admin email and password you were giv
 Create account → add each child once → tap days on the calendar → choose sessions → send request. They get an email when you confirm, with your payment instructions. They can cancel upcoming sessions themselves (your cancellation policy still applies) and update children's details at any time — the register always prints the latest information.
 
 ## Things still to supply
-1. **Logo** — the site currently uses a placeholder mark and colours; send the real logo and we'll match the palette.
+1. **Logo** — a new mark was designed for the site (four-colour pinwheel, `docs/logo-options/chosen-pinwheel.svg`); four alternative concepts are in the same folder. If you already have a logo you'd rather use, send it over and we'll swap it in.
 2. **Prices** — the amounts in Sessions & prices are placeholders; edit them before going live.
 3. **Term dates** — check the Calendar page against the East Sussex dates.
 4. **Photos** — the gallery is empty until you upload some.
