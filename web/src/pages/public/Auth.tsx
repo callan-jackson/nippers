@@ -4,7 +4,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation } from "@tanstack/react-query";
 import { z } from "zod";
-import { Eye, EyeOff, ArrowRight } from "lucide-react";
+import { Eye, EyeOff, ArrowRight, ShieldCheck } from "lucide-react";
 import { Field, Input, Alert } from "@/components/ui";
 import { Logo } from "@/components/Logo";
 import { api, ApiError } from "@/lib/api";
@@ -51,7 +51,7 @@ function useAfterAuth() {
   };
 }
 
-export function Login() {
+export function Login({ admin = false }: { admin?: boolean }) {
   const done = useAfterAuth();
   const { user } = useAuth();
   const nav = useNavigate();
@@ -59,13 +59,27 @@ export function Login() {
     if (user) nav(user.role === "admin" ? "/admin" : "/account", { replace: true });
   }, [user]);
   const { register, handleSubmit, formState: { errors } } = useForm<z.infer<typeof loginSchema>>({ resolver: zodResolver(loginSchema) });
-  const m = useMutation({ mutationFn: (d: z.infer<typeof loginSchema>) => api.post<{ user: User }>("/auth/login", d), onSuccess: (r) => done(r.user) });
+  const m = useMutation({
+    mutationFn: (d: z.infer<typeof loginSchema>) => api.post<{ user: User }>("/auth/login", d),
+    onSuccess: async (r) => {
+      if (admin && r.user.role !== "admin") {
+        await api.post("/auth/logout", {});
+        throw new ApiError(403, "That account is a parent account, not an admin. Sign in on the parents' page instead.");
+      }
+      done(r.user);
+    },
+  });
   return (
-    <Shell title="Welcome back" lead="Sign in to book sessions and manage your children's details." footer={<>New to N.I.P.P.E.R.S.? <Link to="/register" className="font-bold text-sky-600">Create an account</Link></>}>
+    <Shell
+      title={admin ? "Staff & committee sign in" : "Welcome back"}
+      lead={admin ? "For N.I.P.P.E.R.S. staff and committee members managing bookings and the website." : "Sign in to book sessions and manage your children's details."}
+      footer={admin ? <>Parent? <Link to="/login" className="font-bold text-sky-600">Sign in here</Link></> : <>New to N.I.P.P.E.R.S.? <Link to="/register" className="font-bold text-sky-600">Create an account</Link> · <Link to="/admin/login" className="text-ink-500 hover:text-sky-600">Staff login</Link></>}
+    >
+      {admin && <div className="mb-4"><span className="badge bg-sky-100 text-sky-700"><ShieldCheck className="h-3.5 w-3.5" /> Admin area</span></div>}
       {m.isError && <div className="mb-4"><Alert>{(m.error as ApiError).message}</Alert></div>}
       <form onSubmit={handleSubmit((d) => m.mutate(d))} className="grid gap-4" noValidate>
-        <Field label="Email" error={errors.email?.message}><Input type="email" autoComplete="email" inputMode="email" {...register("email")} error={!!errors.email} /></Field>
-        <Field label="Password" error={errors.password?.message}><PasswordInput autoComplete="current-password" {...register("password")} error={!!errors.password} /></Field>
+        <Field label="Email" error={errors.email?.message}><Input type="email" autoComplete="email" inputMode="email" autoCapitalize="none" spellCheck={false} {...register("email")} error={!!errors.email} /></Field>
+        <Field label="Password" error={errors.password?.message}><PasswordInput autoComplete="current-password" autoCapitalize="none" spellCheck={false} {...register("password")} error={!!errors.password} /></Field>
         <div className="text-right text-sm"><Link to="/forgot-password" className="font-bold text-sky-600">Forgotten your password?</Link></div>
         <button className="btn-primary w-full" disabled={m.isPending}>Sign in <ArrowRight className="h-5 w-5" /></button>
       </form>

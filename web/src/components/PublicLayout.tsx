@@ -145,7 +145,7 @@ export function PublicLayout() {
         </div>
         <div className="border-t border-white/10">
           <div className="container-x flex flex-col gap-2 py-5 text-xs text-white/50 sm:flex-row sm:items-center sm:justify-between">
-            <span>© {new Date().getFullYear()} N.I.P.P.E.R.S. · Ofsted registered · All rights reserved</span>
+            <span>© {new Date().getFullYear()} N.I.P.P.E.R.S. · Ofsted registered · All rights reserved · <Link to="/admin/login" className="hover:text-white">Staff login</Link></span>
             <span className="inline-flex items-center gap-2"><Mark size={16} /> Play, create, grow — since 1973</span>
           </div>
         </div>

@@ -21,7 +21,7 @@ export function AppLayout({ items, title, role }: { items: NavItem[]; title: str
 
   useEffect(() => {
     if (loading) return;
-    if (!user) nav(`/login?next=${encodeURIComponent(loc.pathname)}`, { replace: true });
+    if (!user) nav(`${role === "admin" ? "/admin/login" : "/login"}?next=${encodeURIComponent(loc.pathname)}`, { replace: true });
     else if (role === "admin" && !isAdmin) nav("/account", { replace: true });
   }, [user, loading, isAdmin, role]);
 
