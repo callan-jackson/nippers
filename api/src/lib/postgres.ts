@@ -36,20 +36,33 @@ export class PostgresStore implements Store {
 
   constructor(connectionString: string) {
     this.pool = new Pool({ connectionString, max: 3, ssl: /localhost|127\.0\.0\.1/.test(connectionString) ? undefined : { rejectUnauthorized: false } });
-    this.ready = this.pool
-      .query(
-        `CREATE TABLE IF NOT EXISTS docs (
-           container text NOT NULL,
-           id text NOT NULL,
-           pk text NOT NULL,
-           doc jsonb NOT NULL,
-           updated_at timestamptz NOT NULL DEFAULT now(),
-           PRIMARY KEY (container, id)
-         );
-         CREATE INDEX IF NOT EXISTS docs_pk ON docs (container, pk);
-         CREATE INDEX IF NOT EXISTS docs_doc ON docs USING gin (doc jsonb_path_ops);`,
-      )
-      .then(() => undefined);
+    this.ready = this.migrate();
+  }
+
+  // Serialised with an advisory lock: concurrent cold starts would otherwise race
+  // on CREATE TABLE IF NOT EXISTS and one of them would fail.
+  private async migrate(): Promise<void> {
+    const client = await this.pool.connect();
+    try {
+      await client.query("BEGIN");
+      await client.query("SELECT pg_advisory_xact_lock(7219733)");
+      await client.query(`CREATE TABLE IF NOT EXISTS docs (
+        container text NOT NULL,
+        id text NOT NULL,
+        pk text NOT NULL,
+        doc jsonb NOT NULL,
+        updated_at timestamptz NOT NULL DEFAULT now(),
+        PRIMARY KEY (container, id)
+      )`);
+      await client.query("CREATE INDEX IF NOT EXISTS docs_pk ON docs (container, pk)");
+      await client.query("CREATE INDEX IF NOT EXISTS docs_doc ON docs USING gin (doc jsonb_path_ops)");
+      await client.query("COMMIT");
+    } catch (e) {
+      await client.query("ROLLBACK").catch(() => undefined);
+      throw e;
+    } finally {
+      client.release();
+    }
   }
 
   private async run(q: { text: string; values: unknown[] }) {
