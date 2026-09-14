@@ -19,9 +19,10 @@ APP_URL="${APP_URL:-}"
 
 log() { printf '\n\033[1;34m▶ %s\033[0m\n' "$*"; }
 
-state=$(az account show --query state -o tsv 2>/dev/null || echo "none")
+SUB=$(az account show --query id -o tsv 2>/dev/null || true)
+state=$(az rest --method get --url "https://management.azure.com/subscriptions/$SUB?api-version=2020-01-01" --query state -o tsv 2>/dev/null || echo "none")
 if [[ "$state" != "Enabled" ]]; then
-  echo "Azure subscription state is '$state'. Run 'az login' and make sure the subscription is enabled (not Warned/Disabled)." >&2
+  echo "Azure subscription state is '$state'. Run 'az login' and make sure the subscription is Enabled — a 'Warned' free trial must be upgraded to pay-as-you-go in the portal first." >&2
   exit 1
 fi
 
