@@ -12,3 +12,4 @@ api/local.settings.json
 # Local Netlify folder
 .netlify
 .data/
+.neon-url
