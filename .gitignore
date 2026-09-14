@@ -13,3 +13,4 @@ api/local.settings.json
 .netlify
 .data/
 .neon-url
+.admin-password
