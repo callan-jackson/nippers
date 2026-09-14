@@ -1,0 +1,28 @@
+# Self-hosted alternative to Azure Static Web Apps. Data is kept in a JSON
+# file store on a named volume unless COSMOS_CONNECTION_STRING is provided.
+services:
+  api:
+    build: { context: ., target: api }
+    environment:
+      STORE: ${STORE:-file}
+      DATA_DIR: /data
+      COSMOS_CONNECTION_STRING: ${COSMOS_CONNECTION_STRING:-}
+      COSMOS_DATABASE: ${COSMOS_DATABASE:-nippers}
+      JWT_SECRET: ${JWT_SECRET:?set JWT_SECRET in .env (32+ random chars)}
+      ADMIN_EMAIL: ${ADMIN_EMAIL:?set ADMIN_EMAIL in .env}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD:?set ADMIN_PASSWORD in .env}
+      APP_URL: ${APP_URL:-http://localhost:8080}
+      RESEND_API_KEY: ${RESEND_API_KEY:-}
+      MAIL_FROM: ${MAIL_FROM:-N.I.P.P.E.R.S. <bookings@nippers.org.uk>}
+      AzureWebJobsStorage: ""
+    volumes:
+      - nippers-data:/data
+    restart: unless-stopped
+  web:
+    build: { context: ., target: web }
+    ports:
+      - "8080:80"
+    depends_on: [api]
+    restart: unless-stopped
+volumes:
+  nippers-data:

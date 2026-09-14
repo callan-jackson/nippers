@@ -1,0 +1,17 @@
+{
+  "name": "nippers",
+  "private": true,
+  "version": "1.0.0",
+  "description": "N.I.P.P.E.R.S. — after school & holiday club website with parent bookings and admin",
+  "workspaces": ["web", "api"],
+  "scripts": {
+    "dev": "swa start http://localhost:5173 --run \"npm run dev -w web\" --api-location api --api-port 7071",
+    "dev:web": "npm run dev -w web",
+    "dev:api": "npm run start -w api",
+    "build": "npm run build -w api && npm run build -w web",
+    "test": "npm test -w api",
+    "lint": "npm run lint -w web && npm run lint -w api",
+    "deploy": "bash infra/deploy.sh"
+  },
+  "engines": { "node": ">=20" }
+}

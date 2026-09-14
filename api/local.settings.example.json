@@ -1,0 +1,13 @@
+{
+  "IsEncrypted": false,
+  "Values": {
+    "AzureWebJobsStorage": "",
+    "FUNCTIONS_WORKER_RUNTIME": "node",
+    "STORE": "file",
+    "JWT_SECRET": "dev-only-secret-change-me-please-0123456789",
+    "ADMIN_EMAIL": "admin@nippers.org.uk",
+    "ADMIN_PASSWORD": "ChangeMe123!",
+    "APP_URL": "http://localhost:4280"
+  },
+  "Host": { "CORS": "*", "LocalHttpPort": 7071 }
+}
