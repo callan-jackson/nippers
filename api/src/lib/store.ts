@@ -238,8 +238,14 @@ function matches(doc: any, where: Where[]): boolean {
 let instance: Store | null = null;
 export function getStore(): Store {
   if (instance) return instance;
-  const mode = process.env.STORE ?? (process.env.COSMOS_CONNECTION_STRING ? "cosmos" : "file");
-  if (mode === "cosmos") {
+  const mode = process.env.STORE ?? (process.env.COSMOS_CONNECTION_STRING ? "cosmos" : process.env.DATABASE_URL ? "postgres" : "file");
+  if (mode === "postgres") {
+    const url = process.env.DATABASE_URL;
+    if (!url) throw new Error("DATABASE_URL is not set");
+    // Lazy import keeps the Azure bundle free of pg when it isn't used.
+    const { PostgresStore } = require("./postgres") as typeof import("./postgres");
+    instance = new PostgresStore(url);
+  } else if (mode === "cosmos") {
     const cs = process.env.COSMOS_CONNECTION_STRING;
     if (!cs) throw new Error("COSMOS_CONNECTION_STRING is not set");
     instance = new CosmosStore(cs, process.env.COSMOS_DATABASE ?? "nippers");

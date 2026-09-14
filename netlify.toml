@@ -1,0 +1,33 @@
+[build]
+  command = "npm run build -w web"
+  publish = "web/dist"
+
+[functions]
+  directory = "api/netlify"
+  node_bundler = "esbuild"
+  external_node_modules = ["pg-native"]
+
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Content-Type-Options = "nosniff"
+    X-Frame-Options = "SAMEORIGIN"
+    Referrer-Policy = "strict-origin-when-cross-origin"
+    Permissions-Policy = "camera=(), microphone=(), geolocation=()"
+
+[[headers]]
+  for = "/assets/*"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"
+
+# SPA fallback (function paths take precedence over redirects)
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
+
+[dev]
+  command = "npm run dev -w web -- --port 5173 --strictPort"
+  targetPort = 5173
+  port = 8888
+  framework = "#custom"

@@ -34,3 +34,14 @@ describe("CosmosStore SQL compilation", () => {
     expect(store.compile({}, "VALUE COUNT(1)").query).toBe("SELECT VALUE COUNT(1) FROM c");
   });
 });
+
+describe("PostgresStore SQL compilation", async () => {
+  const { compile } = await import("../src/lib/postgres");
+  it("uses jsonb comparisons so numbers and strings sort correctly", () => {
+    const q = compile("bookings", { where: [{ field: "status", op: "in", value: ["a", "b"] }, { field: "date", op: ">=", value: "2026-01-01" }, { field: "archived", op: "!=", value: true }], orderBy: { field: "sort" }, limit: 3 });
+    expect(q.text).toBe("SELECT doc FROM docs WHERE container = $1 AND $2::jsonb @> (doc->'status') AND (doc->'date') >= $3::jsonb AND (doc->'archived') IS DISTINCT FROM $4::jsonb ORDER BY doc->'sort' ASC LIMIT 3");
+    expect(q.values).toEqual(["bookings", '["a","b"]', '"2026-01-01"', "true"]);
+    expect(compile("users", {}, "count").text).toBe("SELECT count(*)::int AS n FROM docs WHERE container = $1");
+    expect(() => compile("users", { where: [{ field: "a b", op: "=", value: 1 }] })).toThrow();
+  });
+});

@@ -1,4 +1,4 @@
-import { app } from "@azure/functions";
+import { app } from "../lib/router";
 import { getStore } from "../lib/store";
 import { handler, json, parseBody, HttpError, requireUser } from "../lib/http";
 import { bookingRequestSchema } from "../shared/schemas";

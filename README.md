@@ -9,20 +9,21 @@ Parents create an account, add their children (school, medical, emergency contac
 | Layer | Choice | Why |
 |---|---|---|
 | Frontend | React 18 + Vite + TypeScript, Tailwind, React Router, TanStack Query, react-hook-form + zod | Mobile-first SPA; validation schemas are shared with the API |
-| API | Azure Functions v4 (Node 20, TypeScript, bundled with esbuild) | Runs as Static Web Apps managed functions — no servers |
-| Data | Azure Cosmos DB (NoSQL) **free tier** | 1000 RU/s + 25 GB, £0/month; a JSON file store is used for local dev/tests |
+| API | TypeScript handlers behind a platform-neutral router — deployable as **Netlify Functions** or **Azure Functions** | Same code, two hosts; no servers |
+| Data | **Neon Postgres** (free tier) via a `Store` interface; also Cosmos DB (free tier) or a JSON file store for dev/tests | Swap hosts without touching business logic |
 | Auth | Email + password (scrypt, per-user salt), JWT in an `HttpOnly; SameSite=Lax` cookie, parent/admin roles | No third-party auth dependency |
 | Email | Resend REST API (free tier) | Logged to console until `RESEND_API_KEY` is set |
-| Hosting | Azure Static Web Apps **Free** | Custom domain + SSL included, £0/month |
+| Hosting | **Netlify Free** (primary) or Azure Static Web Apps Free | Custom domain + SSL included, no card required, £0/month |
 
 Total running cost: **£0/month**. Also ships a `docker-compose.yml` for self-hosting anywhere.
 
 ```
-api/            Azure Functions (TypeScript)
+api/            API (TypeScript)
   src/functions   HTTP endpoints: auth, public, children, bookings, admin (/api/manage/*)
-  src/lib         store (Cosmos + file), auth, bookings/availability rules, content seed, email
+  src/lib         router (platform-neutral), stores (Postgres, Cosmos, file), auth, booking rules, seed, email
   src/shared      types + zod schemas shared with the web app
-  test/           vitest unit tests
+  src/index.ts    Azure Functions adapter · netlify/api.mts  Netlify Functions adapter
+  test/           vitest unit tests (rules, auth, stores, HTTP dispatch)
 web/            React app (public site, /account parent portal, /admin dashboard)
 infra/          deploy.sh (Azure), nginx.conf (Docker)
 docs/           client brief + admin handover guide
@@ -32,14 +33,32 @@ docs/           client brief + admin handover guide
 
 ```bash
 npm install
-npm run dev:api     # Functions host on :7071 (file store in api/.data, admin seeded from api/local.settings.json)
-npm run dev:web     # Vite on :5173, proxies /api → :7071
+npm run dev         # netlify dev → http://localhost:8888 (Vite + the API function, file store, admin seeded from .env)
 ```
 
-Default local admin: `admin@nippers.org.uk` / `ChangeMe123!` (see `api/local.settings.json`).
-Emails are printed to the API console. `npm test` runs the API unit tests; `npm run lint` type-checks both packages.
+Default local admin: `admin@nippers.org.uk` / `ChangeMe123!` (see `.env`). Emails are printed to the console.
+`npm test` runs the API unit tests; `npm run lint` type-checks both packages.
+Azure-style local dev (`npm run dev:azure`) needs `azure-functions-core-tools` and the SWA CLI installed globally.
 
-## Deploy to Azure (free)
+## Deploy to Netlify + Neon (free, recommended)
+
+1. Create a Neon project and copy its **pooled** connection string.
+2. `netlify login`, then from the repo root:
+   ```bash
+   cd web && netlify sites:create --name nippers --cwd .. && cd ..
+   netlify env:set --cwd . STORE postgres
+   netlify env:set --cwd . DATABASE_URL "postgresql://…"
+   netlify env:set --cwd . JWT_SECRET "$(openssl rand -base64 48)"
+   netlify env:set --cwd . ADMIN_EMAIL nippers1973@outlook.com
+   netlify env:set --cwd . ADMIN_PASSWORD "choose-a-strong-one"
+   netlify env:set --cwd . APP_URL https://nippers.netlify.app
+   npm run deploy
+   ```
+   The database schema is created on first request. Connect the GitHub repo in the Netlify UI for deploys on push.
+3. Custom domain: Netlify → Domain management → add `nippers.org.uk` and set the DNS records it shows at the registrar (one.com). SSL is automatic.
+4. Email: create a free Resend account, verify the domain, `netlify env:set RESEND_API_KEY re_…`.
+
+## Deploy to Azure (free alternative)
 
 ```bash
 az login
@@ -63,7 +82,8 @@ docker compose up -d   # http://localhost:8080 — data persisted on a named vol
 
 | Setting | Purpose |
 |---|---|
-| `STORE` | `cosmos` or `file` (default `file`; `memory` in tests) |
+| `STORE` | `postgres`, `cosmos` or `file` (inferred from which connection string is set; `memory` in tests) |
+| `DATABASE_URL` | Postgres/Neon connection string — the `docs` table is created on first run |
 | `COSMOS_CONNECTION_STRING`, `COSMOS_DATABASE` | Cosmos DB target (database + containers are created on first run) |
 | `JWT_SECRET` | 32+ random characters; rotating it signs everyone out |
 | `ADMIN_EMAIL`, `ADMIN_PASSWORD` | First admin account, created on first request if missing |
@@ -74,6 +94,6 @@ docker compose up -d   # http://localhost:8080 — data persisted on a named vol
 
 - Passwords hashed with scrypt (N=16384) and a 16-byte salt; login lockout after 8 failures; password-reset tokens are single-use and expire after 1 hour.
 - Session cookie is `HttpOnly`, `Secure` in production, `SameSite=Lax`; state-changing endpoints require `Content-Type: application/json` and a matching `Origin`.
-- All input is validated with zod on both client and server; Cosmos queries are parameterised and field names whitelisted.
+- All input is validated with zod on both client and server; Postgres and Cosmos queries are parameterised and field names whitelisted.
 - Admin endpoints live under `/api/manage/*` and check the `admin` role on every request. Parents can only read/write their own children and bookings.
 - Contact form has a honeypot field; bank details are only shown to signed-in parents with confirmed bookings.

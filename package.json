@@ -2,16 +2,22 @@
   "name": "nippers",
   "private": true,
   "version": "1.0.0",
-  "description": "N.I.P.P.E.R.S. — after school & holiday club website with parent bookings and admin",
-  "workspaces": ["web", "api"],
+  "description": "N.I.P.P.E.R.S. \u2014 after school & holiday club website with parent bookings and admin",
+  "workspaces": [
+    "web",
+    "api"
+  ],
   "scripts": {
-    "dev": "swa start http://localhost:5173 --run \"npm run dev -w web\" --api-location api --api-port 7071",
+    "dev": "cd web && netlify dev --cwd ..",
     "dev:web": "npm run dev -w web",
-    "dev:api": "npm run start -w api",
+    "dev:azure": "swa start http://localhost:5173 --run \"npm run dev -w web\" --api-location api --api-port 7071",
     "build": "npm run build -w api && npm run build -w web",
     "test": "npm test -w api",
     "lint": "npm run lint -w web && npm run lint -w api",
-    "deploy": "bash infra/deploy.sh"
+    "deploy": "cd web && netlify deploy --cwd .. --build --prod",
+    "deploy:azure": "bash infra/deploy.sh"
   },
-  "engines": { "node": ">=20" }
+  "engines": {
+    "node": ">=20"
+  }
 }

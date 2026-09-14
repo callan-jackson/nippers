@@ -1,4 +1,4 @@
-import { app, HttpRequest } from "@azure/functions";
+import { app, type Req as HttpRequest } from "../lib/router";
 import { getStore } from "../lib/store";
 import { handler, json, parseBody, HttpError, requireUser, currentUser } from "../lib/http";
 import { hashPassword, verifyPassword, signToken, sessionCookie, newId, newToken } from "../lib/auth";

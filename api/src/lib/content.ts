@@ -1,6 +1,6 @@
 import { getStore } from "./store";
 import type { Calendar, SessionType, SiteSettings, Testimonial, Policy, User } from "../shared/types";
-import { hashPassword, newId } from "./auth";
+import { hashPassword } from "./auth";
 
 // Content docs live in one container partitioned by `type`.
 export type ContentType = "settings" | "sessionType" | "calendar" | "testimonial" | "gallery" | "policy" | "announcement";
@@ -128,7 +128,7 @@ export async function ensureSeed(log: (m: string) => void = () => {}): Promise<v
     const existing = await store.query<User>("users", { where: [{ field: "email", op: "=", value: adminEmail }] });
     if (!existing.length) {
       const admin = {
-        id: newId(),
+        id: "seed-admin", // fixed id so concurrent cold starts can't create duplicates
         email: adminEmail,
         passwordHash: await hashPassword(process.env.ADMIN_PASSWORD),
         firstName: "N.I.P.P.E.R.S.",
@@ -154,8 +154,8 @@ export async function ensureSeed(log: (m: string) => void = () => {}): Promise<v
   if (!(await store.get("content", "settings", "settings"))) await store.upsert("content", { ...DEFAULT_SETTINGS, id: "settings", type: "settings" });
 
   const t = await store.query("content", { where: [{ field: "type", op: "=", value: "testimonial" }] });
-  if (!t.length) for (const x of DEFAULT_TESTIMONIALS) await store.upsert("content", { ...x, id: newId(), type: "testimonial" });
+  if (!t.length) for (const [i, x] of DEFAULT_TESTIMONIALS.entries()) await store.upsert("content", { ...x, id: `seed-testimonial-${i}`, type: "testimonial" });
 
   const p = await store.query("content", { where: [{ field: "type", op: "=", value: "policy" }] });
-  if (!p.length) for (const x of DEFAULT_POLICIES) await store.upsert("content", { ...x, id: newId(), type: "policy", updatedAt: new Date().toISOString() });
+  if (!p.length) for (const [i, x] of DEFAULT_POLICIES.entries()) await store.upsert("content", { ...x, id: `seed-policy-${i}`, type: "policy", updatedAt: new Date().toISOString() });
 }

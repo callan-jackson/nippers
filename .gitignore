@@ -8,3 +8,7 @@ api/local.settings.json
 .swa/
 .DS_Store
 *.log
+
+# Local Netlify folder
+.netlify
+.data/

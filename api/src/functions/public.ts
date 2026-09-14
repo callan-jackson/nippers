@@ -1,4 +1,4 @@
-import { app } from "@azure/functions";
+import { app } from "../lib/router";
 import { getStore } from "../lib/store";
 import { handler, json, parseBody, HttpError } from "../lib/http";
 import { getSettings, getSessionTypes, getCalendar, ensureSeed } from "../lib/content";

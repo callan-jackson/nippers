@@ -1,4 +1,4 @@
-import { HttpRequest, HttpResponseInit, InvocationContext } from "@azure/functions";
+import type { Req as HttpRequest, Res as HttpResponseInit, Ctx as InvocationContext } from "./router";
 import { ZodSchema, ZodError } from "zod";
 import { verifyToken, AuthClaims } from "./auth";
 import type { Role } from "../shared/types";
