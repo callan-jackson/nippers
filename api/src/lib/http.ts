@@ -105,9 +105,12 @@ type Handler = (req: HttpRequest, ctx: InvocationContext) => Promise<HttpRespons
 export function handler(fn: Handler): Handler {
   return async (req, ctx) => {
     try {
-      if (!["GET", "HEAD", "OPTIONS"].includes(req.method)) {
+      // DELETE has no body and cannot be sent by an HTML form, so only Origin is checked for it.
+      if (!["GET", "HEAD", "OPTIONS", "DELETE"].includes(req.method)) {
         const ct = req.headers.get("content-type") ?? "";
         if (!ct.includes("application/json")) throw new HttpError(415, "Expected application/json");
+      }
+      if (req.method !== "GET" && req.method !== "HEAD" && req.method !== "OPTIONS") {
         const origin = req.headers.get("origin");
         if (origin && !originAllowed(origin, req)) throw new HttpError(403, "Cross-site request blocked");
       }

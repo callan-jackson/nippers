@@ -14,7 +14,7 @@ async function request<T>(method: string, url: string, body?: unknown): Promise<
   const res = await fetch(`/api${url}`, {
     method,
     credentials: "same-origin",
-    headers: body !== undefined ? { "Content-Type": "application/json" } : {},
+    headers: method === "GET" ? {} : { "Content-Type": "application/json" },
     body: body !== undefined ? JSON.stringify(body) : undefined,
   });
   if (res.status === 204) return undefined as T;
